@@ -1,0 +1,31 @@
+{
+    "name"     : "FFHQ",
+    "path"     : "../../Data/FFHQ",
+    "ckpt_dir" : "./ckpt_dir/",
+    "log_dir"  : "./log",
+
+    "img_size" : 256, 
+    "in_channels" : 3,
+
+    "batchSize": 128,
+    "learningRate":1e-4,
+    "trainEpochs":700,
+    "saveIter"   :100,
+
+    "patch_size" : 16, 
+    "dropNumber" : 128,
+
+    "n_layers": 8,
+    "emb_size": 768, 
+    "num_heads": 8, 
+    "dff": 1024,     
+    
+    "rate": 0.5, 
+    "ffn_rate": 0.5,
+    "genGlobalrate": 1,
+    "genLocalrate" : 0,
+    "wganGPrate"   : 0,
+
+    "randomNoise": "False",
+    "genLocal"   : "True"
+}

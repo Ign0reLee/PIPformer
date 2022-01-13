@@ -1,0 +1,30 @@
+{
+    "name"     : "FFHQ",
+    "path"     : "../../Data/CelebA/CelebA-HQ/celeba-256",
+    "ckpt_dir" : "./ckpt_dir/FFHQ_GEL2_12Layer",
+    "log_dir"  : "./log",
+
+    "img_size" : 256, 
+    "in_channels" : 3,
+
+    "batchSize": 64,
+    "learningRate":1e-4,
+    "trainEpochs":1000,
+    "saveIter"   :100,
+
+    "patch_size" : 16, 
+    "dropNumber" : 128,
+
+    "n_layers": 12,
+    "emb_size": 768, 
+    "num_heads": 8, 
+    "dff": 1024,     
+    
+    "rate": 0.5, 
+    "ffn_rate": 0.5,
+    "genGlobalrate": 1,
+    "genLocalrate" : 10,
+
+    "randomNoise": "False",
+    "genLocal"   : "True"
+}
