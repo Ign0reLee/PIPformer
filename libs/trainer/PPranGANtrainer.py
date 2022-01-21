@@ -39,10 +39,11 @@ class PPransGANtrainer(Base_Trainer):
         if not os.path.exists(os.path.join(self.ckpt_dir, self.name)): os.mkdir(os.path.join(self.ckpt_dir, self.name))
         
         if self.restart:
-            self.gan.netG, self.gan.netD, self.gan.optimG, self.gan.optimD, self.startEpoch = load(self.gan.netG, self.gan.netD, self.gan.optimG, self.gan.optimD, self.startEpoch)
-
+            self.gan.netG, self.gan.netD, self.gan.optimG, self.gan.optimD, self.startEpoch = load(os.path.join(self.gan.ckptDir, self.name), self.gan.netG, self.gan.netD, self.gan.optimG, self.gan.optimD)
+            print(f"Load Done.. Step : {self.startEpoch}")
         self.gan.netG = nn.DataParallel(self.gan.netG)
         self.gan.netD = nn.DataParallel(self.gan.netD)
+        self.gan.perceptualNet = nn.DataParallel(self.gan.perceptualNet)
 
         self.makeDatasets(ddp=False)
         self.makeTensorBoard()

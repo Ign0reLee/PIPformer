@@ -157,7 +157,7 @@ def load(ckpt_dir, netG, netD, optimG, optimD,  step=None):
     
     if ckpt_lst is None:
         ckpt_lst = os.listdir(ckpt_dir)
-
+    print(ckpt_lst)
     ckpt_lst.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
 
 

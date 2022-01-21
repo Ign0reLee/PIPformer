@@ -1,6 +1,6 @@
 {
     "name"     : "FFHQ",
-    "path"     : "../../Data/FFHQ",
+    "path"     : "../DATA/FFHQ",
     "ckpt_dir" : "./ckpt_dir/",
     "log_dir"  : "./log",
 
@@ -26,6 +26,6 @@
     "genLocalrate" : 0,
     "wganGPrate"   : 10.0,
 
-    "randomNoise": 0,
-    "genLocal"   : 0
+    "randomNoise": 1,
+    "genLocal"   : 1
 }
