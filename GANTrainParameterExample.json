@@ -1,6 +1,6 @@
 {
-    "name"     : "FFHQ",
-    "path"     : "../DATA/FFHQ",
+    "name"     : "Face",
+    "path"     : "../DATA/FACE",
     "ckpt_dir" : "./ckpt_dir/",
     "log_dir"  : "./log",
 

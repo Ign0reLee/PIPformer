@@ -40,7 +40,9 @@ class PPransGANtrainer(Base_Trainer):
         
         if self.restart:
             self.gan.netG, self.gan.netD, self.gan.optimG, self.gan.optimD, self.startEpoch = load(os.path.join(self.gan.ckptDir, self.name), self.gan.netG, self.gan.netD, self.gan.optimG, self.gan.optimD)
+            self.startEpoch += 1
             print(f"Load Done.. Step : {self.startEpoch}")
+            
         self.gan.netG = nn.DataParallel(self.gan.netG)
         self.gan.netD = nn.DataParallel(self.gan.netD)
         self.gan.perceptualNet = nn.DataParallel(self.gan.perceptualNet)
