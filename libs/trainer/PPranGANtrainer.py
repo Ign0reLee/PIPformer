@@ -1,4 +1,4 @@
-import os,sys
+import os,sys, gc
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -10,6 +10,13 @@ from libs.trainer.train_utils import save, load
 from libs.trainer.base_trainer import Base_Trainer
 
 from tqdm import tqdm
+from ptflops import get_model_complexity_info
+
+import GPUtil
+
+
+
+
 
 r"""
 Optimize Patch-Based Painting using GAN architecture with Transformers
@@ -23,6 +30,8 @@ Reference Code :
 class PPransGANtrainer(Base_Trainer):
     
     def __init__(self, jsonData, sharedFilePath,restart=False, startEpoch=0):
+
+        torch.cuda.max_memory_allocated()
         
         self.jsonData = jsonData
         self.restart = restart
@@ -37,6 +46,15 @@ class PPransGANtrainer(Base_Trainer):
         Base_Trainer.__init__(self, self.gan.pathDB, self.gan.ckptDir, self.gan.logDir, self.gan.patch_size, self.gan.img_size, self.gan.N, self.gan.batchSize, self.sharedFilePath)  
         self.name = self.gan.name + "_PPransGAN"
         if not os.path.exists(os.path.join(self.ckpt_dir, self.name)): os.mkdir(os.path.join(self.ckpt_dir, self.name))
+        dummy_size = (3, 256, 256)
+        netGmacs, netGparams = get_model_complexity_info(self.gan.netG, dummy_size, as_strings=False, print_per_layer_stat=True, verbose=True)
+        netDmacs, netDparams = get_model_complexity_info(self.gan.netD, dummy_size, as_strings=False, print_per_layer_stat=True, verbose=True)
+        print(f'computational netG complexity: {float(netGmacs)/2} FLOPs')
+        print(f'number of netG parameters: {netGparams} prams')
+        print(f'computational netD complexity: {float(netDmacs)/2} FLOPs')
+        print(f'number of netD parameters: {netDparams} prams')
+        del dummy_size
+
         
         if self.restart:
             self.gan.netG, self.gan.netD, self.gan.optimG, self.gan.optimD, self.startEpoch = load(os.path.join(self.gan.ckptDir, self.name), self.gan.netG, self.gan.netD, self.gan.optimG, self.gan.optimD)
@@ -52,10 +70,17 @@ class PPransGANtrainer(Base_Trainer):
 
 
         for epoch in range(self.startEpoch, self.gan.epochs):
+
             self.gan.netG.train()
             self.gan.netD.train()
+            torch.cuda.empty_cache()
+            gc.collect()
 
             for data in self.loaderTrain:
+                # GPUtil.showUtilization()
+                torch.cuda.empty_cache()
+                gc.collect()
+
                 inputImg = data["inputs"].cuda()
                 realImg  = data["real"].cuda()
                 if self.gan.genLocal:
@@ -101,6 +126,8 @@ class PPransGANtrainer(Base_Trainer):
 
                 with torch.no_grad():
                     for index, data in enumerate(self.loaderVal):
+                        torch.cuda.empty_cache()
+                        gc.collect()
                         inputImg = data["inputs"].cuda()
                         realImg  = data["real"].cuda()
 

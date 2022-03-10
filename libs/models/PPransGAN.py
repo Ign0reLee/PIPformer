@@ -7,7 +7,8 @@ import torch.nn as nn
 
 from libs.models.baseGAN import baseGAN
 from libs.models.metrics import PSNR
-from libs.transformers import GenerateTransformer, DiscriminateTransformer, WGANGPGradientPenalty
+# from libs.transformers import GenerateTransformer, DiscriminateTransformer, WGANGPGradientPenalty
+from libs.transformersNew import GenerateTransformer,  WGANGPGradientPenalty
 
 from libs.cnns import PatchDiscriminator
 

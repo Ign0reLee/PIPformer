@@ -1,0 +1,6 @@
+ckpt_dir/*
+log/*
+__pycache__
+test
+testData
+testMask
