@@ -2,6 +2,7 @@ import numpy as np
 
 import torch
 import torch.nn as nn
+from torch import einsum
 
 from einops import rearrange, reduce, repeat
 from einops.layers.torch import Rearrange, Reduce
@@ -78,20 +79,85 @@ class PositionWiseFullyConvolutionalLayer(nn.Module):
         self.conv1 = nn.Conv2d(d_model, dff, kernel_size=1, stride=1)
         self.relu1 = nn.GELU()
         self.dropout1 = nn.Dropout(p=rate)
-        # self.depthwise_conv = nn.Conv2d(dff, dff, kernel_size=3, stride=1, padding=1, groups=dff)
-        # self.relu2 = nn.GELU()
-        # self.dropout2 = nn.Dropout(p=rate)
         self.conv2 =  nn.Conv2d(dff, d_model, kernel_size=1, stride=1)
     
     def forward(self, x):
         out = self.conv1(x)
         out = self.relu1(out)
         out = self.dropout1(out)
-        # out = self.depthwise_conv(out)
-        # out = self.relu2(out)
-        # out = self.dropout2(out)
         out = self.conv2(out)
         return out
+
+class PoistionWiseSeparableConvolutionalLayer(nn.Module):
+
+    def __init__(self, d_model, dff, rate=0.5):
+        super(PoistionWiseSeparableConvolutionalLayer, self).__init__()
+        self.conv1 = nn.Conv2d(d_model, dff, kernel_size=1, stride=1)
+        self.relu1 = nn.GELU()
+        self.dropout1 = nn.Dropout(p=rate)
+        self.depthwise_conv = nn.Conv2d(dff, dff, kernel_size=3, stride=1, padding=1, groups=dff)
+        self.relu2 = nn.GELU()
+        self.dropout2 = nn.Dropout(p=rate)
+        self.conv2 =  nn.Conv2d(dff, d_model, kernel_size=1, stride=1)
+    
+    def forward(self, x):
+        out = self.conv1(x)
+        out = self.relu1(out)
+        out = self.dropout1(out)
+        out = self.depthwise_conv(out)
+        out = self.relu2(out)
+        out = self.dropout2(out)
+        out = self.conv2(out)
+        return out
+
+class Attention2d(nn.Module):
+    r"""
+    Original Code : https://github.com/xxxnell/how-do-vits-work/blob/transformer/models/attentions.py
+    It is more refined codes for 2d attention Layer
+    """
+
+    def __init__(self, dim_in, dim_out=None, num_heads=64, img_size=16):
+        super(Attention2d, self).__init__()
+
+        self.num_heads = num_heads
+        self.prob      = nn.Softmax(dim=-1)
+
+        dim_out = dim_in if dim_out is None else dim_out
+
+        self.wq = nn.Conv2d(dim_in, dim_out, kernel_size=1, stride=1, bias=False)
+        self.wk = nn.Conv2d(dim_in, dim_out, kernel_size=1, stride=1, bias=False)
+        self.wv = nn.Conv2d(dim_in, dim_out, kernel_size=1, stride=1, bias=False)
+
+        self.split = Rearrange('b (n e) (h) (w) -> b n (h w) e', n=self.num_heads)
+        self.concat = Rearrange('b n (h w) e -> b (n e) (h) (w)', h =img_size)
+
+        self.out = nn.Conv2d(dim_out, dim_out,  kernel_size=1, stride=1)
+    
+    def calc_attn(self, query, key, value, mask=None):
+
+        dots = einsum('b n i d, b n j d -> b n i j', query, key)
+        dots = dots.masked_fill(mask) if mask is not None else dots
+        attn = self.prob(dots)
+        out = einsum('b n i j, b n j d -> b n i d', attn, value)
+
+        return out, attn
+    
+    def forward(self, x, mask=None):
+
+        query  = self.wq(x)
+        key    = self.wk(x)
+        value  = self.wv(x)
+
+        split_query = self.split(query)
+        split_key   = self.split(key)
+        split_value = self.split(value)
+
+        out, attn = self.calc_attn(split_query, split_key, split_value, mask)
+        out = self.concat(out)
+        out = self.out(out)
+
+        return out, attn
+
 
 class MultiHeadAttention(nn.Module):
 
@@ -110,7 +176,7 @@ class MultiHeadAttention(nn.Module):
         self.flatten = Rearrange('b e (h) (w) -> b (h w) e')
         self.reshape = Rearrange('b (h w) e  -> b e (h) (w)', h=img_size)
         
-        self.fc = nn.Conv2d(d_embed, d_model, kernel_size=1, stride=1)
+        self.fc = nn.Conv2d(d_model, d_model, kernel_size=1, stride=1)
 
     def split_head(self, x, batch_size):
         x = x.view(batch_size, -1, self.num_heads, self.depth)
@@ -170,7 +236,8 @@ class TransformerLayer(nn.Module):
 
         super(TransformerLayer, self).__init__()
         
-        self.mha = MultiHeadAttention(d_embed=d_embed, d_model=d_model, num_heads=num_heads, img_size=img_size)
+        # self.mha = MultiHeadAttention(d_embed=d_embed, d_model=d_model, num_heads=num_heads, img_size=img_size)
+        self.mha = Attention2d(dim_in=d_embed, dim_out=d_model, num_heads=num_heads, img_size=img_size)
         self.ffn = PositionWiseFullyConvolutionalLayer(d_model=d_model, dff=dff, rate=ffn_rate)
 
         self.layernorm1 = nn.LayerNorm([d_model, img_size, img_size], eps=eps)
@@ -183,9 +250,9 @@ class TransformerLayer(nn.Module):
 
     def forward(self, x, mask=None):
         x = self.layernorm1(x)
-        attn_output, attn_weight = self.mha(x, x, x, mask)
+        attn_output, attn_weight = self.mha(x, mask)
         attn_output    = self.dropout1(attn_output)
-        out1           = self.layernorm2(x + attn_output)
+        out1           = self.layernorm2(x + attn_output.clone().contiguous())
 
         ffn_output     = self.ffn(out1)
         ffn_output     = self.dropout2(ffn_output)

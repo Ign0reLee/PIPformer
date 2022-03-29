@@ -7,7 +7,7 @@
     "img_size" : 256, 
     "in_channels" : 3,
 
-    "batchSize": 128,
+    "batchSize": 64,
     "learningRate":1e-4,
     "trainEpochs":700,
     "saveIter"   :100,

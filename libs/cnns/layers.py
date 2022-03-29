@@ -73,6 +73,7 @@ class Conv2dLayer(nn.Module):
             x = self.norm(x)
         if self.activation:
             x = self.activation(x)
+        
         return x
 
 class TransposeConv2dLayer(nn.Module):

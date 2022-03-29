@@ -28,7 +28,7 @@ class PerceptualNet(nn.Module):
         self.register_buffer('std', torch.FloatTensor([0.229, 0.224, 0.225]).view(1,3,1,1))
 
     def forward(self, x):
-        x = (x-self.mean) / self.std
+        x = (x-self.mean.clone()) / self.std.clone()
         x = self.transform(x, mode='bilinear', size=(224, 224), align_corners=False)
         for block in self.block:
             x = block(x)
@@ -50,15 +50,15 @@ class PPransGAN(baseGAN):
         # self.netD = DiscriminateTransformer(self.n_layers, self.emb_size, self.num_heads,
         #                                     self.dff, self.in_channels, self.patch_size, self.img_size,
         #                                     self.rate, self.ffn_rate, local=self.genLocal).cuda(gpu)
-        self.netD = PatchDiscriminator().cuda(gpu)
-        self.perceptualNet = PerceptualNet().cuda(gpu)
+        self.netD = PatchDiscriminator().cuda()
+        self.perceptualNet = PerceptualNet().cuda()
 
         self.optimG = torch.optim.Adam(filter(lambda x: x.requires_grad, self.netG.parameters()), lr= self.lr, betas=[0, 0.99])
         self.optimD = torch.optim.Adam(filter(lambda x: x.requires_grad, self.netD.parameters()), lr= self.lr, betas=[0, 0.99])
-        self.l1Loss  = nn.L1Loss().cuda(gpu)
-        self.mseLoss = nn.MSELoss().cuda(gpu)
-        self.advLoss = nn.BCELoss().cuda(gpu)
-        self.metrics = PSNR().cuda(gpu)
+        self.l1Loss  = nn.L1Loss().cuda()
+        self.mseLoss = nn.MSELoss().cuda()
+        self.advLoss = nn.BCELoss().cuda()
+        self.metrics = PSNR().cuda()
 
         # Set Log
         self.loss = {"LOSS":[], "G":[], "D":[]}
@@ -72,14 +72,13 @@ class PPransGAN(baseGAN):
 
     
     def oneTrainStep(self, inputImg, realImg, dropIndex=None):
+    
         # Update the Discrfiminator
         self.optimD.zero_grad()
 
         # Make Fake Data
         fakeOut, _ = self.netG(inputImg)
-
         # Pred Real and Pred Fake
-
         #############################################
         #   WGAN-GP
         #############################################
@@ -111,18 +110,21 @@ class PPransGAN(baseGAN):
         #   SN-Patch GAN
         #############################################
         
+        
         predGlobalReal = self.netD(realImg)
         predGlobalFake = self.netD(fakeOut)
+        
         lossGlobalReal = -torch.mean(predGlobalReal)
         lossGlobalFake = torch.mean(predGlobalFake)
 
         # Calculate Global and Local
         lossD = 0.5 * (lossGlobalReal + lossGlobalFake)
-        
+
+    
         # Backward Loss
-        self.loss["D"].append(lossD.item())
         lossD.backward(retain_graph=True)
-        
+        self.loss["D"].append(lossD.item())
+            
         #Update One Step
         self.optimD.step()
 

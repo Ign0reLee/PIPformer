@@ -29,10 +29,9 @@ Reference Code :
 
 class PPransGANtrainer(Base_Trainer):
     
-    def __init__(self, jsonData, sharedFilePath,restart=False, startEpoch=0):
+    def __init__(self, jsonData, sharedFilePath,restart=False, startEpoch=0, ddp=False):
 
         torch.cuda.max_memory_allocated()
-        
         self.jsonData = jsonData
         self.restart = restart
         self.startEpoch = startEpoch

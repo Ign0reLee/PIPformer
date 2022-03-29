@@ -34,8 +34,8 @@ class PatchDiscriminator(nn.Module):
         self.block2 = Conv2dLayer(nker, nker * 2, 4, 2, 1, pad_type = pad_type, activation = activation, norm = norm, sn = True)
         self.block3 = Conv2dLayer(nker * 2, nker * 4, 4, 2, 1, pad_type = pad_type, activation = activation, norm = norm, sn = True)
         self.block4 = Conv2dLayer(nker * 4, nker * 4, 4, 2, 1, pad_type = pad_type, activation = activation, norm = norm, sn = True)
-        self.block5 = Conv2dLayer(nker * 4, nker * 4, 1, 1, 1, pad_type = pad_type, activation = activation, norm = norm, sn = True)
-        self.block6 = Conv2dLayer(nker * 4, 1, 1, 1, 1, pad_type = pad_type, activation = 'none', norm = 'none', sn = True)
+        self.block5 = Conv2dLayer(nker * 4, nker * 4, 1, 1, 0, pad_type = pad_type, activation = activation, norm = norm, sn = True)
+        self.block6 = Conv2dLayer(nker * 4, 1, 1, 1, 0, pad_type = pad_type, activation = 'none', norm = 'none', sn = True)
         
     def forward(self, img):
         # the input x should contain 4 channels because it is a combination of recon image and mask

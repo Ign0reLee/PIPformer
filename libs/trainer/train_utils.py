@@ -134,41 +134,47 @@ def save(ckpt_dir, netG, netD, optimG, optimD, step, model_name="PatchPainting")
                 "optimD" : optimD_dicts},
                 os.path.join(ckpt_dir, model_name, f"{model_name}_{step}.pth"))
 
-def load(ckpt_dir, netG, netD, optimG, optimD,  step=None):
+def load(ckpt_dir,  netG,  optimG, name, epoch=None, gpu=None):
     r"""
     Model Lodaer
 
     Inputs:
         ckpt_dir : (string) check point directory
         netG     : (nn.module) Generator Network
-        netD     : (nn.module) Discriminator Network
         opitmG   : (torch.optim) Generator's Optimizers
-        optimD   : (torch.optim) Discriminator's  Optimizers
         step     : (int) find step.  if NOne, last scale
+
     """
+    ckpt_lst = os.listdir(ckpt_dir)
+
+    if epoch is not None:
+        ckptFile = os.path.join(ckpt_dir, name+f"_{epoch}.pth")
+    else:
+        ckpt_lst.sort()
+        ckptFile = os.path.join(ckpt_dir, ckpt_lst[-1])
+
+    if not os.path.exists(ckptFile):
+        raise ValueError(f"Please Check Check Point File Path or Epoch, File is not exists!")
+
+    # Load Epochs Now
+    epoch = int(ckpt_lst[-1].split("_")[-1][:-4])
+
+    # Load Model 
+    if gpu is not None:
+        dist.barrier()
+        mapLocation = {"cuda:0": f"cuda:{gpu}"}
+        dict_model = torch.load(ckptFile, map_location=mapLocation)
+    else:
+        dict_model = torch.load(ckptFile)
     
-    ckpt_lst = None
+    try:
+        netG.load_state_dict(dict_model['netG'])
+        netG.load_state_dict(dict_model['netD'])
+    except:
+        netG.module.load_state_dict(dict_model['netG'])
+        netG.module.load_state_dict(dict_model['netD'])
 
-    if step is not None:
-        if ckpt_lst is not None:
-            ckpt_lst = [i for i in ckpt_lst if i.split("_")[-1][0] == step]
-        else:
-            ckpt_lst = [i for i in os.listdir(ckpt_dir) if int(i.split("_")[-1][:-4]) == step]
-    
-    if ckpt_lst is None:
-        ckpt_lst = os.listdir(ckpt_dir)
-    print(ckpt_lst)
-    ckpt_lst.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
-
-
-    # Load Step
-    step = int(ckpt_lst[-1].split("_")[-1][:-4])
-
-    # Load Model
-    dict_model = torch.load(os.path.join(ckpt_dir, ckpt_lst[-1]))
-    netG.load_state_dict(dict_model['netG'])
-    netD.load_state_dict(dict_model['netD'])
     optimG.load_state_dict(dict_model["optimG"])
     optimD.load_state_dict(dict_model["optimD"])
-    
-    return netG, netD, optimG, optimD,  step
+
+    return netG, netD,  optimG, optimD, epoch
