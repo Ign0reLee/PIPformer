@@ -120,7 +120,7 @@ class Attention2d(nn.Module):
         super(Attention2d, self).__init__()
 
         self.num_heads = num_heads
-        self.prob      = nn.Softmax(dim=-1)
+        self.prob      = nn.Softmax(dim = -1)
 
         dim_out = dim_in if dim_out is None else dim_out
 

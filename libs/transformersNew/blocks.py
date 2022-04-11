@@ -41,14 +41,14 @@ class GenerateTransformer(nn.Module):
                                  eps=eps,
                                  randomNoise=randomNoise)
         # Original Code
-        self.toRGB = nn.Sequential(
-            # Rearrange('b (h w) e -> b e (h) (w)', h=img_size//patch_size),
-            # in ViT, using a conv layer instead of a linear one -> performance gains
-            nn.ConvTranspose2d(emb_size, in_channels, kernel_size=patch_size, stride=patch_size),
-        )
+        # self.toRGB = nn.Sequential(
+        #     # Rearrange('b (h w) e -> b e (h) (w)', h=img_size//patch_size),
+        #     # in ViT, using a conv layer instead of a linear one -> performance gains
+        #     nn.ConvTranspose2d(emb_size, in_channels, kernel_size=patch_size, stride=patch_size),
+        # )
         # # First Code
-        # self.toRGB = nn.Sequential()
-        # self.makeToRGB(in_channels, emb_size, patch_size, img_size)
+        self.toRGB = nn.Sequential()
+        self.makeToRGB(in_channels, emb_size, patch_size, img_size)
 
         # # Seconde Code
         # self.toRGB = nn.Sequential(
@@ -64,7 +64,7 @@ class GenerateTransformer(nn.Module):
         blocks = int(np.log2(patch_size))
         i = 1
 
-        self.toRGB.add_module("reshape", Rearrange('b (h w) e -> b e (h) (w)', h=img_size//patch_size))
+        # self.toRGB.add_module("reshape", Rearrange('b (h w) e -> b e (h) (w)', h=img_size//patch_size))
         self.toRGB.add_module(f"deconv_{i}", nn.ConvTranspose2d(emb_size, emb_size//(2**i), kernel_size=2, stride=2))
 
         for index in range(1, blocks-1):
@@ -102,14 +102,14 @@ class Generator(nn.Module):
         self.randomNoise = randomNoise
         
         # Original Code(Just One CNN to make Embedding)
-        self.projection = nn.Sequential(
-            # in ViT, using a conv layer instead of a linear one -> performance gains
-            nn.Conv2d(in_channels, emb_size, kernel_size=patch_size, stride=patch_size),
-            # Rearrange('b e (h) (w) -> b (h w) e'),
-        )
+        # self.projection = nn.Sequential(
+        #     # in ViT, using a conv layer instead of a linear one -> performance gains
+        #     nn.Conv2d(in_channels, emb_size, kernel_size=patch_size, stride=patch_size),
+        #     # Rearrange('b e (h) (w) -> b (h w) e'),
+        # )
         # #First Code
-        # self.projection = nn.Sequential()
-        # self.makeProjection(in_channels, emb_size, patch_size)
+        self.projection = nn.Sequential()
+        self.makeProjection(in_channels, emb_size, patch_size)
         # # Sencond Code
         # self.projection = nn.Sequential(
         #     nn.Conv2d(in_channels, 256, kernel_size=2, stride=2),
@@ -120,7 +120,7 @@ class Generator(nn.Module):
         # )
         # Positional Encoding
         self.positions = nn.Parameter(torch.randn(emb_size, (img_size // patch_size), (img_size // patch_size)))
-        # self.positions = nn.Parameter(positional_encoding((img_size//patch_size**2), emb_size))
+        # self.positions = nn.Parameter(positional_encoding(((img_size//patch_size)**2), emb_size))
         self.gen_layers = nn.ModuleList()
         for _ in range(self.n_layers):
             self.gen_layers.append(TransformerLayer(d_embed=emb_size, d_model=emb_size, num_heads=num_heads, dff=dff, rate=rate, ffn_rate=ffn_rate, eps=eps, img_size=img_size//patch_size))
@@ -136,7 +136,7 @@ class Generator(nn.Module):
             i += 1
             self.projection.add_module(f"conv_{i}",nn.Conv2d(emb_size//(2**index), emb_size//(2**(index-1)), kernel_size=2, stride=2))
 
-        self.projection.add_module("flatten", Rearrange('b e (h) (w) -> b (h w) e'))
+        # self.projection.add_module("flatten", Rearrange('b e (h) (w) -> b (h w) e'))
 
     def forward(self, x, mask=None):
         # Initalize Weight Dictionary
