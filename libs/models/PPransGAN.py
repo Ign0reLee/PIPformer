@@ -51,7 +51,7 @@ class PPransGAN(baseGAN):
         #                                     self.dff, self.in_channels, self.patch_size, self.img_size,
         #                                     self.rate, self.ffn_rate, local=self.genLocal).cuda(gpu)
         self.netD = PatchDiscriminator().cuda()
-        self.perceptualNet = PerceptualNet().cuda()
+        # self.perceptualNet = PerceptualNet().cuda()
 
         self.optimG = torch.optim.Adam(filter(lambda x: x.requires_grad, self.netG.parameters()), lr= self.lr, betas=[0, 0.99])
         self.optimD = torch.optim.Adam(filter(lambda x: x.requires_grad, self.netD.parameters()), lr= self.lr, betas=[0, 0.99])
@@ -148,10 +148,10 @@ class PPransGAN(baseGAN):
         # ############################################
         #   Perceptual Loss
         # ############################################
-        # Calculate MSE
-        fakeFeatures = self.perceptualNet(fakeOut)
-        realFeatures = self.perceptualNet(realImg)
-        perceptualLoss = self.l1Loss(realFeatures, fakeFeatures)
+        # # Calculate Perceptual
+        # fakeFeatures = self.perceptualNet(fakeOut)
+        # realFeatures = self.perceptualNet(realImg)
+        # perceptualLoss = self.l1Loss(realFeatures, fakeFeatures)
 
         #############################################
         #   WGAN-GP
@@ -175,7 +175,8 @@ class PPransGAN(baseGAN):
         #############################################
         predGlobalFake = self.netD(fakeOut)
         lossG = -torch.mean(predGlobalFake)
-        loss  = lossG + (globalMSE * 10) + (perceptualLoss *10)
+        # loss  = lossG + (globalMSE * 10) + (perceptualLoss *10)
+        loss  = lossG + (globalMSE * 10)
         if self.genLocal:
             loss += (localMSE *10)
 

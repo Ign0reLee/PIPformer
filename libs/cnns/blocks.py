@@ -27,7 +27,7 @@ r"""
 # Input: generated image / ground truth and mask
 # Output: patch based region, we set 30 * 30
 class PatchDiscriminator(nn.Module):
-    def __init__(self, in_channels=3, nker=64, pad_type="zero", activation="relu", norm="bn"):
+    def __init__(self, in_channels=3, nker=64, pad_type="zero", activation="lrelu", norm="bn"):
         super(PatchDiscriminator, self).__init__()
         # Down sampling
         self.block1 = Conv2dLayer(in_channels, nker, 4, 2, 1, pad_type = pad_type, activation = activation, norm = norm, sn = True)

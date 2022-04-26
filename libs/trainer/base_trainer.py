@@ -3,7 +3,7 @@ import numpy as np
 
 import torch
 import torch.nn as nn
-import torch.distributed as dist
+
 
 from torchvision import transforms
 from torch.utils.data import DataLoader, dataset
