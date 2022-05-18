@@ -3,6 +3,7 @@ import numpy as np
 
 import torch
 import torch.nn as nn
+import torch.distributed as dist
 
 
 from torchvision import transforms
@@ -46,8 +47,8 @@ class Base_Trainer():
     
     def initialize(self, gpu, size):
         # For Debugging If, You want. using below it
-        # os.environ["NCCL_DEBUG"] = "INFO"
-        # os.environ['NCCL_DEBUG_SUBSYS']="ALL"
+        os.environ["NCCL_DEBUG"] = "INFO"
+        os.environ['NCCL_DEBUG_SUBSYS']="ALL"
         # For Online Learning, In My enviroment, can't using it. if want to use chang, init_method.
         # os.environ["MASTER_ADDR"] = "127.0.0.1"
         # os.environ["MASTER_PORT"] = "29500"
@@ -59,7 +60,7 @@ class Base_Trainer():
 
         # Setting Model with Json Parsing
         dist.init_process_group(backend='nccl', init_method='file://'+self.sharedFilePath+'/sharedfile', rank=gpu, world_size=size)
-
+        raise ValueError
     
     def makeDatasets(self, ddp=True):
         self.transformTrain     = transforms.Compose([Normalization(mean=0.5, std=0.5),NPatchDrop(self.patch_size)])

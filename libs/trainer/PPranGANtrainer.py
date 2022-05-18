@@ -62,7 +62,7 @@ class PPransGANtrainer(Base_Trainer):
             
         self.gan.netG = nn.DataParallel(self.gan.netG)
         self.gan.netD = nn.DataParallel(self.gan.netD)
-        self.gan.perceptualNet = nn.DataParallel(self.gan.perceptualNet)
+        # self.gan.perceptualNet = nn.DataParallel(self.gan.perceptualNet)
 
         self.makeDatasets(ddp=False)
         self.makeTensorBoard()

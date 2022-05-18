@@ -77,7 +77,10 @@ class PPransGANtrainer(Base_Trainer):
 
         # Check Model's FLOPs
         if not os.path.exists(os.path.join(self.ckpt_dir, self.name)): 
-            os.mkdir(os.path.join(self.ckpt_dir, self.name))
+            try:
+                os.mkdir(os.path.join(self.ckpt_dir, self.name))
+            except:
+                pass
         dummy_size = (3, 256, 256)
         netGmacs, netGparams = get_model_complexity_info(self.gan.netG, dummy_size, as_strings=False, print_per_layer_stat=False, verbose=True)
         netDmacs, netDparams = get_model_complexity_info(self.gan.netD, dummy_size, as_strings=False, print_per_layer_stat=False, verbose=True)
